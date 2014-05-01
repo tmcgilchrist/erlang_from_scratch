@@ -22,12 +22,28 @@ allowed_methods(ReqData, Context) ->
     {['GET'], ReqData, Context}.
 
 resource_exists(ReqData, Context) ->
-    _Id = wrq:path_info(link_id, ReqData),
-    Response = false,
+    Id = wrq:path_info(link_id, ReqData),
+    Response = link_exists(Id),
     {Response, ReqData, Context}.
 
 to_json(ReqData, Context) ->
-    _Id = wrq:path_info(link_id, ReqData),
-    Link = [{}],
+    Id = wrq:path_info(link_id, ReqData),
+    {ok, Link} = lookup_link(Id),
     Response = mochijson2:encode({struct, Link}),
     {Response, ReqData, Context}.
+
+lookup_link(Id) ->
+    case ets:lookup(links, Id) of
+        [] ->
+            not_found;
+        [{_Key, Link}] ->
+            {ok, Link}
+    end.
+
+link_exists(Id) ->
+    case lookup_link(Id) of
+        not_found ->
+            false;
+        _ ->
+            true
+    end.

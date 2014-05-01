@@ -17,6 +17,10 @@ start_link() ->
 %% Supervisor callbacks
 %% ===================================================================
 init([]) ->
+    %% Create ETS table
+    setup_ets(),
+    insert_test_links(),
+
     %% Setup Webmachine
     Ip =  "0.0.0.0",
     Dispatch = load_wm_resources(),
@@ -36,3 +40,21 @@ init([]) ->
 load_wm_resources() ->
     Resources = [erlio_link_resource, erlio_assets_resource],
     lists:flatten([Module:routes() || Module <- Resources]).
+
+
+setup_ets() ->
+    ets:new(links, [public,
+                    ordered_set,
+                    named_table,
+                    {read_concurrency, true},
+                    {write_concurrency, true}]).
+
+insert_test_links() ->
+        ets:insert(links, [
+                       {"0",
+                        [{url, <<"http://erlang.com">>},
+                         {hits, <<"0">>}]},
+                       {"1",
+                        [{url, <<"http://www.openbsd.org">>},
+                         {hits, <<"0">>}]}
+                       ]).
