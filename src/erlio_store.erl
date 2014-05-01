@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start/0, start_link/0]).
+-export([start/0, start_link/0, lookup_link/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3,
@@ -21,19 +21,30 @@ start() ->
 start_link() ->
     gen_server:start_link({local, erlio_store}, ?MODULE, [], []).
 
+lookup_link(Id) ->
+    gen_server:call(erlio_store, {lookup_link, Id}).
+
 %% =========================================================================================
 %% gen_server Callbacks
 %% =========================================================================================
 init([]) ->
     {ok, #state{}}.
+
+handle_call({lookup_link, _Id}, _From, State) ->
+    Reply = [{}],
+    {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
+
 handle_cast(_Msg, State) ->
     {noreply, State}.
+
 handle_info(_Info, State) ->
     {noreply, State}.
+
 terminate(_Reason, _State) ->
     ok.
+
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
