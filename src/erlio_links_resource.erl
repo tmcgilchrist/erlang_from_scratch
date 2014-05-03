@@ -9,7 +9,7 @@
 
 -include_lib("webmachine/include/webmachine.hrl").
 
--record(context, {}).
+-record(context, {id, url}).
 
 %% =========================================================================================
 %% API functions
@@ -34,13 +34,25 @@ post_is_create(ReqData, Context) ->
 content_types_accepted(ReqData, Context) ->
     {[{"application/json", from_json}], ReqData, Context}.
 
-create_path(ReqData, Context) ->
-    _Attributes = wrq:req_body(ReqData),
-    Resource = "",
-    {Resource, ReqData, Context}.
+create_path(ReqData, _Context) ->
+    Attributes = wrq:req_body(ReqData),
+    {struct,[{<<"url">>, Url}]} = mochijson2:decode(Attributes),
+    Id = generate_id(Url),
+    Resource = "/link/" ++ Id,
+    NewContext = #context{id=Id, url=Url},
+    {Resource, ReqData, NewContext}.
 
-from_json(ReqData, Context) ->
+from_json(ReqData, Context = #context{id=Id, url=Url}) ->
+    Link = {Id,
+            [{url, Url},
+             {hits, <<"0">>}]},
+    erlio_store:create_link(Link),
     {true, ReqData, Context}.
 
 allow_missing_post(ReqData, Context) ->
     {true, ReqData, Context}.
+
+generate_id(Url) ->
+    crypto:hash_init(md5),
+    B = crypto:hash(md5, Url),
+    mochihex:to_hex(B).

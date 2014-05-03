@@ -38,5 +38,5 @@ init([]) ->
 
 %% Load webmachine routes directly from each resource
 load_wm_resources() ->
-    Resources = [erlio_link_resource, erlio_assets_resource],
+    Resources = [erlio_link_resource, erlio_links_resource, erlio_assets_resource],
     lists:flatten([Module:routes() || Module <- Resources]).
