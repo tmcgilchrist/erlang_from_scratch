@@ -7,6 +7,8 @@
          generate_etag/2,
          last_modified/2,
          resource_exists/2,
+         previously_existed/2,
+         moved_temporarily/2,
          content_types_provided/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
@@ -100,6 +102,22 @@ resource_exists(ReqData, Context) ->
             end
     end.
 
+-spec previously_existed(wrq:reqdata(), #context{}) ->
+    {boolean(), wrq:reqdata(), #context{}}.
+previously_existed(ReqData, State) ->
+    Key = get_key(ReqData),
+    {erlio_store:link_exists(Key), ReqData, State}.
+
+-spec moved_temporarily(wrq:reqdata(), #context{}) ->
+      {{halt, 302}, string(), #context{}}.
+moved_temporarily(ReqData, State) ->
+    Key = get_key(ReqData),
+    {ok, Link} = erlio_store:lookup_link(Key),
+    Url = binary_to_list(proplists:get_value(url, Link)),
+    {{halt, 302},
+     wrq:set_resp_header("Location", Url, ReqData),
+     State}.
+
 %% @doc Return the proper content type of the file, or default to
 %%      text/html.
 -spec content_types_provided(wrq:reqdata(), #context{}) ->
@@ -139,3 +157,13 @@ priv_dir(Mod) ->
         PrivDir ->
             PrivDir
     end.
+
+%% Extract key from request path
+-spec get_key(wrq:reqdata()) -> string().
+get_key(ReqData) ->
+    binary_to_list(iolist_to_binary(remove_slash(wrq:path(ReqData)))).
+
+%% Remove slash from path
+-spec remove_slash(string()) -> string().
+remove_slash(Path) ->
+    re:replace(Path, "^\/", "").
