@@ -28,7 +28,21 @@ resource_exists(ReqData, State) ->
     {false, ReqData, State }.
 
 previously_existed(ReqData, State) ->
-    {true, ReqData, State}.
+    Key = get_key(ReqData),
+    {erlio_store:link_exists(Key), ReqData, State}.
 
-moved_temporarily(_ReqData, State) ->
-    {{halt, 302}, "link", State}.
+moved_temporarily(ReqData, State) ->
+    Key = get_key(ReqData),
+    {ok, Link} = erlio_store:lookup_link(Key),
+    Url = binary_to_list(proplists:get_value(url, Link)),
+    {{halt, 302},
+     wrq:set_resp_header("Location", Url, ReqData),
+     State}.
+
+%% Extract key from request path
+get_key(ReqData) ->
+    binary_to_list(iolist_to_binary(remove_slash(wrq:path(ReqData)))).
+
+%% Remove slash from path
+remove_slash(Path) ->
+    re:replace(Path, "^\/", "").

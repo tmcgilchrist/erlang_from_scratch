@@ -28,8 +28,8 @@ routes() ->
     [
      {["javascripts"], ?MODULE, []},
      {["stylesheets"], ?MODULE, []},
-     {["images"], ?MODULE, []},
-     {['*'], ?MODULE, []}            %% Accept anything, but we restrict in identify_resource to only index.html
+     {["images"], ?MODULE, []}
+     %% {['*'], ?MODULE, []}            %% Accept anything, but we restrict in identify_resource to only index.html
     ].
 
 %% @doc Handle serving of the single page application.
